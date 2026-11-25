@@ -9,8 +9,10 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 CANDIDATES = {
     "linear_regression": lambda seed: LinearRegression(),
     "ridge": lambda seed: Ridge(alpha=1.0),
-    "random_forest": lambda seed: RandomForestRegressor(n_estimators=300, min_samples_leaf=3, random_state=seed, n_jobs=-1),
-    "gradient_boosting": lambda seed: GradientBoostingRegressor(n_estimators=300, learning_rate=0.05, max_depth=3, random_state=seed),
+    "random_forest": lambda seed: RandomForestRegressor(
+        n_estimators=300, min_samples_leaf=3, random_state=seed, n_jobs=-1),
+    "gradient_boosting": lambda seed: GradientBoostingRegressor(
+        n_estimators=300, learning_rate=0.05, max_depth=3, random_state=seed),
 }
 
 

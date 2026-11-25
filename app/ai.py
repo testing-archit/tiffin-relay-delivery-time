@@ -10,8 +10,9 @@ service keeps working.
 """
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -53,14 +54,14 @@ def client():
 
 
 class ParsedBatch(BaseModel):
-    distance_km: Optional[float] = None
-    tiffins: Optional[int] = None
-    handovers: Optional[int] = None
-    wait_at_station_min: Optional[float] = None
-    rider_age: Optional[int] = None
-    temp_c: Optional[float] = None
-    transport: Optional[Literal["bicycle", "local_train", "scooter"]] = None
-    route_zone: Optional[Literal["Central", "Suburb", "Old City"]] = None
+    distance_km: float | None = None
+    tiffins: int | None = None
+    handovers: int | None = None
+    wait_at_station_min: float | None = None
+    rider_age: int | None = None
+    temp_c: float | None = None
+    transport: Literal["bicycle", "local_train", "scooter"] | None = None
+    route_zone: Literal["Central", "Suburb", "Old City"] | None = None
 
 
 def parse_batch(text: str) -> dict:

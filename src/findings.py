@@ -48,7 +48,7 @@ def main() -> None:
         "mae_v2_on_check": mon["mae_v2_on_check"],
         "decision": mon["decision"],
     }
-    header = "\n".join(l for l in path.read_text().splitlines()[:3] if l.startswith("#"))
+    header = "\n".join(line for line in path.read_text().splitlines()[:3] if line.startswith("#"))
     path.write_text(header + "\n\n" + yaml.safe_dump(findings, sort_keys=False, allow_unicode=True))
     print(path.read_text())
 

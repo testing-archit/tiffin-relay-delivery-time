@@ -1,0 +1,20 @@
+[project]
+name = "mp098-tiffin-relay"
+version = "1.0.0"
+description = "SCSE3040 MLOps mini project MP098: tiffin relay delivery time (Bhopal)"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff.lint.per-file-ignores]
+"deploy/grafana/build_dashboard.py" = ["E501"]   # PromQL expressions read best on one line

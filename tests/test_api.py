@@ -30,7 +30,8 @@ def test_boundaries_allowed():
 
 
 def test_missing_field_422():
-    body = dict(GOOD); body.pop("rider_age")
+    body = dict(GOOD)
+    body.pop("rider_age")
     assert client.post("/predict", json=body).status_code == 422
 
 

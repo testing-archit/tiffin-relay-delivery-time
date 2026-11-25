@@ -23,7 +23,7 @@ def stat(title, expr, unit="short", x=0, w=4, thresholds=None, decimals=None):
 def series(title, targets, unit="short", x=0, w=12, h=8, desc=""):
     panels.append({"type": "timeseries", "title": title, "description": desc, "datasource": DS,
                    "gridPos": {"x": x, "y": y, "w": w, "h": h},
-                   "targets": [dict(target(e, l), refId=chr(65 + i)) for i, (e, l) in enumerate(targets)],
+                   "targets": [dict(target(e, legend), refId=chr(65 + i)) for i, (e, legend) in enumerate(targets)],
                    "fieldConfig": {"defaults": {"unit": unit, "custom": {"lineWidth": 2, "fillOpacity": 8}}, "overrides": []},
                    "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}})
 

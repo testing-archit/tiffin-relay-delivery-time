@@ -1,6 +1,6 @@
 "MP098 prediction service: tiffin relay delivery time in minutes."
 import os
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 import joblib
@@ -25,13 +25,13 @@ instrument(app, bundle["version"])
 event("model_loaded", version=bundle["version"], path=str(MODEL_PATH), ai_enabled=ai.enabled())
 
 
-class Transport(str, Enum):
+class Transport(StrEnum):
     bicycle = "bicycle"
     local_train = "local_train"
     scooter = "scooter"
 
 
-class RouteZone(str, Enum):
+class RouteZone(StrEnum):
     central = "Central"
     suburb = "Suburb"
     old_city = "Old City"
@@ -41,12 +41,14 @@ class Batch(BaseModel):
     "One tiffin batch at pick-up time."
     model_config = ConfigDict(extra="forbid")
 
-    distance_km: float = Field(..., gt=0, le=35, description="Route length; above 35 km is impossible.", examples=[10.5])
+    distance_km: float = Field(..., gt=0, le=35, examples=[10.5],
+                               description="Route length; above 35 km is impossible.")
     tiffins: int = Field(..., ge=1, examples=[35])
     handovers: int = Field(..., ge=0, examples=[3])
     wait_at_station_min: float = Field(..., ge=0, examples=[13.0])
     rider_age: int = Field(..., ge=14, le=90, examples=[40])
-    temp_c: float = Field(..., ge=5, le=55, description="Noon temperature; below 5 is a typing mistake.", examples=[28.0])
+    temp_c: float = Field(..., ge=5, le=55, examples=[28.0],
+                          description="Noon temperature; below 5 is a typing mistake.")
     transport: Transport
     route_zone: RouteZone
 
