@@ -1,0 +1,34 @@
+groups:
+  - name: mp098
+    rules:
+      - alert: ApiDown
+        expr: up{job="mp098-api"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: "The prediction API is not answering /metrics."}
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 1e-9) > 0.05
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "More than 5% of requests fail with a 5xx."}
+
+      - alert: SlowPredictions
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{path="/predict"}[5m]))) > 0.5
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: "p95 /predict latency above 500 ms."}
+
+      # Drift: in training (Jan to Jun) the median route was about 10.5 km.
+      # later.csv showed routes about twice as long (PSI 3.6), so watch for it live.
+      - alert: DistanceDrift
+        expr: histogram_quantile(0.5, sum by (le) (rate(prediction_input_bucket{feature="distance_km"}[1h]))) > 15
+        for: 30m
+        labels: {severity: info}
+        annotations: {summary: "Median live distance_km is above 15 km; the model may need retraining."}
+
+      - alert: GeminiFailing
+        expr: sum(rate(ai_requests_total{outcome="error"}[10m])) > 0 and sum(rate(ai_requests_total{outcome="ok"}[10m])) == 0
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: "Every Gemini call is failing; check the key and quota."}
