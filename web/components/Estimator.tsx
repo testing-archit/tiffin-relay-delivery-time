@@ -2,6 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import ArrivalBoard from "./ArrivalBoard";
 import BatchForm from "./BatchForm";
+import Breakdown from "./Breakdown";
 import { api, ApiError, DEFAULT_BATCH, type Batch, type Explanation, type Health } from "@/lib/api";
 import { fieldErrors } from "@/lib/errors";
 
@@ -31,6 +32,7 @@ export default function Estimator({ brand }: { brand: ReactNode }) {
 
   const update = (patch: Partial<Batch>) => setBatch(b => ({ ...b, ...patch }));
   const up = health && health !== "down";
+  const aiOn = !!(up && health.ai_enabled);
 
   return (
     <>
@@ -49,6 +51,7 @@ export default function Estimator({ brand }: { brand: ReactNode }) {
         <section className="stack" aria-label="Estimate">
           <ArrivalBoard batch={batch} minutes={result?.delivery_min ?? null} pickup={pickup} pending={pending}
             problem={Object.values(errors)[0]} />
+          <Breakdown result={result} batch={batch} aiOn={aiOn} />
         </section>
       </main>
     </>

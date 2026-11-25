@@ -1,0 +1,15 @@
+.axis, .bar { display: grid; grid-template-columns: 110px 1fr 1fr 56px; gap: 6px; align-items: center; }
+.axis { color: var(--muted); font-size: .78rem; }
+.axis span:nth-child(2) { text-align: right; }
+.bars { display: grid; gap: 8px; margin-top: 4px; }
+.bar { font-size: .9rem; }
+.left { display: flex; justify-content: flex-end; }
+.fill { display: block; height: 14px; border-radius: 3px; transition: width .25s; }
+.left .fill { background: var(--save); }
+.right .fill { background: var(--lid-deep); }
+.val { text-align: right; font-variant-numeric: tabular-nums; }
+.base { color: var(--muted); font-size: .85rem; margin: 10px 0 0; }
+.explain { margin-top: 16px; border-top: 1px solid var(--rim); padding-top: 14px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row select { border: 1px solid var(--rim); border-radius: 8px; padding: 7px; background: #fff; }
+.out { margin: 12px 0 0; font-size: 1.02rem; max-width: 68ch; }
