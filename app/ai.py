@@ -22,7 +22,7 @@ try:
 except ImportError:  # the container gets the key from the environment
     pass
 
-MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")  # ~3x faster than 3.5-flash, same answers here
 
 LANGUAGE_RULE = (
     "Reply in the language and script the user writes or speaks in: Hindi in Devanagari, "
