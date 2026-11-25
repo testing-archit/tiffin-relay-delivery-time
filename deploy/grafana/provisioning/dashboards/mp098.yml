@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: mp098
+    folder: MP098
+    type: file
+    options: {path: /var/lib/grafana/dashboards}
