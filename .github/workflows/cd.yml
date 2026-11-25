@@ -1,0 +1,90 @@
+# CD: runs after CI passes on main.
+#   1. builds the API and web images and pushes them to GitHub Container Registry
+#   2. the server's Watchtower pulls them within a minute and restarts the services
+#      (pull-based: GitHub holds no SSH or cloud credentials)
+#   3. smoke-tests the live site until it reports the new commit
+# Set the repository variable DEPLOY_URL (e.g. http://34.169.33.87) to enable step 3.
+name: CD
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  publish:
+    name: Publish images to GHCR
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push mp098-api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          build-args: GIT_SHA=${{ env.SHA }}
+          tags: |
+            ${{ env.REGISTRY }}/mp098-api:latest
+            ${{ env.REGISTRY }}/mp098-api:${{ env.SHA }}
+            ${{ env.REGISTRY }}/mp098-api:1.0
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Push mp098-web
+        uses: docker/build-push-action@v6
+        with:
+          context: web
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/mp098-web:latest
+            ${{ env.REGISTRY }}/mp098-web:${{ env.SHA }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  verify:
+    name: Verify the live deployment
+    needs: publish
+    if: vars.DEPLOY_URL != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_URL }}
+    steps:
+      - name: Wait for Watchtower to roll out ${{ env.SHA }}
+        run: |
+          for i in $(seq 1 40); do
+            build=$(curl -fsS --max-time 10 "${{ vars.DEPLOY_URL }}/api/health" | jq -r .build || true)
+            echo "attempt $i: live build=$build"
+            [ "$build" = "$SHA" ] && exit 0
+            sleep 15
+          done
+          echo "::error::The server did not pick up $SHA within 10 minutes"; exit 1
+      - name: Smoke test the prediction path and the client rules
+        run: |
+          ok='{"distance_km":12,"tiffins":30,"handovers":3,"wait_at_station_min":10,"rider_age":35,"temp_c":28,"transport":"scooter","route_zone":"Old City"}'
+          curl -fsS -X POST "${{ vars.DEPLOY_URL }}/api/predict" -H 'content-type: application/json' -d "$ok" | tee /dev/stderr | jq -e '.delivery_min > 0'
+          bad=$(echo "$ok" | jq -c '.distance_km = 40')
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "${{ vars.DEPLOY_URL }}/api/predict" -H 'content-type: application/json' -d "$bad")
+          [ "$code" = "422" ] || { echo "::error::distance 40 km gave $code, expected 422"; exit 1; }

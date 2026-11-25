@@ -7,6 +7,7 @@ COPY . .
 RUN npm run build
 
 FROM node:24-slim
+LABEL org.opencontainers.image.source="https://github.com/testing-archit/tiffin-relay-delivery-time"
 WORKDIR /web
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 # address of the FastAPI service; overridden in Kubernetes

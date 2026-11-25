@@ -71,7 +71,8 @@ class Explanation(Prediction):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_version": bundle["version"], "ai_enabled": ai.enabled()}
+    return {"status": "ok", "model_version": bundle["version"], "ai_enabled": ai.enabled(),
+            "build": os.getenv("GIT_SHA", "dev")}
 
 
 @app.post("/predict", response_model=Prediction)
