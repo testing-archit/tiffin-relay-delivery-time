@@ -1,0 +1,38 @@
+{
+  "leaking_column": {
+    "present": false,
+    "column": null
+  },
+  "unit_mixup": {
+    "present": true,
+    "column": "wait_at_station_min",
+    "group_value": "Suburb",
+    "factor": 60,
+    "ratio": 63.23
+  },
+  "sentinel_value": {
+    "present": true,
+    "column": "temp_c",
+    "value": -999,
+    "count": 48
+  },
+  "duplicate_rows": {
+    "present": true,
+    "count": 35
+  },
+  "stuck_sensor": {
+    "present": false,
+    "column": null,
+    "start_date": null,
+    "end_date": null
+  },
+  "target_typos": {
+    "present": true,
+    "count": 11
+  },
+  "spelling_variants": {
+    "present": false,
+    "column": null,
+    "true_levels": null
+  }
+}

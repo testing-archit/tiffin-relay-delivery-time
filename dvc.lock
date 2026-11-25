@@ -1,0 +1,149 @@
+schema: '2.0'
+stages:
+  issues:
+    cmd: python -m src.issues
+    deps:
+    - path: config.yaml
+      hash: md5
+      md5: 33f242340078310076b564fec258b1c6
+      size: 1045
+    - path: data/holdout_features.csv
+      hash: md5
+      md5: 6908f3af5c22487dad5fa81cec9fb494
+      size: 14857
+    - path: data/train.csv
+      hash: md5
+      md5: ae344d0c38e95be800a8029138ea987c
+      size: 66328
+    - path: src/issues.py
+      hash: md5
+      md5: 43c38552cdaae1c24eaefb8908b91556
+      size: 7319
+    outs:
+    - path: reports/data_issues.json
+      hash: md5
+      md5: a65fca5a4a4d99443dc8ef43160749b8
+      size: 658
+  clean:
+    cmd: python -m src.data
+    deps:
+    - path: config.yaml
+      hash: md5
+      md5: 33f242340078310076b564fec258b1c6
+      size: 1045
+    - path: data/later.csv
+      hash: md5
+      md5: 9b1b849a37ef8207223bcdc14be58271
+      size: 19289
+    - path: data/train.csv
+      hash: md5
+      md5: ae344d0c38e95be800a8029138ea987c
+      size: 66328
+    - path: src/data.py
+      hash: md5
+      md5: 699ffabccb97c51437e8db14f4c895ac
+      size: 2760
+    - path: src/issues.py
+      hash: md5
+      md5: 43c38552cdaae1c24eaefb8908b91556
+      size: 7319
+    outs:
+    - path: data/processed/later_clean.csv
+      hash: md5
+      md5: 9b1b849a37ef8207223bcdc14be58271
+      size: 19289
+    - path: data/processed/train_clean.csv
+      hash: md5
+      md5: 6fda513adb6daaeeb3be0b3d8f6cc141
+      size: 63402
+  train:
+    cmd: python -m src.train
+    deps:
+    - path: config.yaml
+      hash: md5
+      md5: 33f242340078310076b564fec258b1c6
+      size: 1045
+    - path: data/processed/train_clean.csv
+      hash: md5
+      md5: 6fda513adb6daaeeb3be0b3d8f6cc141
+      size: 63402
+    - path: src/model.py
+      hash: md5
+      md5: 68ac43fd6889be583490896f8f02d137
+      size: 1183
+    - path: src/train.py
+      hash: md5
+      md5: 63c0a81d1e61eb94c21066b39188093b
+      size: 3017
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: 49fffab1129e0b165ca808110b064a7b
+      size: 280
+  monitor:
+    cmd: python -m src.monitor
+    deps:
+    - path: data/processed/later_clean.csv
+      hash: md5
+      md5: 9b1b849a37ef8207223bcdc14be58271
+      size: 19289
+    - path: data/processed/train_clean.csv
+      hash: md5
+      md5: 6fda513adb6daaeeb3be0b3d8f6cc141
+      size: 63402
+    - path: reports/metrics.json
+      hash: md5
+      md5: 49fffab1129e0b165ca808110b064a7b
+      size: 280
+    - path: src/monitor.py
+      hash: md5
+      md5: 48837d4ccb36c8136e814693fae0e4e3
+      size: 4406
+    outs:
+    - path: reports/monitoring.json
+      hash: md5
+      md5: 4ac62458f0c2ab15684b7ea076f34502
+      size: 607
+  predict:
+    cmd: python -m src.predict
+    deps:
+    - path: data/holdout_features.csv
+      hash: md5
+      md5: 6908f3af5c22487dad5fa81cec9fb494
+      size: 14857
+    - path: reports/monitoring.json
+      hash: md5
+      md5: 4ac62458f0c2ab15684b7ea076f34502
+      size: 607
+    - path: src/predict.py
+      hash: md5
+      md5: c0c61f25919e55c627238fdedfe41487
+      size: 1355
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: d47a68f888f4a71b839ab700e5dc3585
+      size: 4120
+    - path: predictions/holdout_predictions.csv
+      hash: md5
+      md5: f77549e5ad6163f1994de1d6b81e5ba7
+      size: 3247
+  findings:
+    cmd: python -m src.findings
+    deps:
+    - path: reports/data_issues.json
+      hash: md5
+      md5: a65fca5a4a4d99443dc8ef43160749b8
+      size: 658
+    - path: reports/metrics.json
+      hash: md5
+      md5: 49fffab1129e0b165ca808110b064a7b
+      size: 280
+    - path: reports/monitoring.json
+      hash: md5
+      md5: 4ac62458f0c2ab15684b7ea076f34502
+      size: 607
+    - path: src/findings.py
+      hash: md5
+      md5: 3e579f4f6ae8ba995b40dd676fbfb86d
+      size: 2080

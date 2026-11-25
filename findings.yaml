@@ -1,0 +1,57 @@
+# MP098 findings --- fill in every value, keep every key.
+# The marking tool reads this file. Write null only where the comment says so.
+# Use the exact column names and group values from your data files.
+
+group_id: G220
+problem_id: MP098
+data_issues:
+  leaking_column:
+    present: false
+    column: null
+  unit_mixup:
+    present: true
+    column: wait_at_station_min
+    group_value: Suburb
+    factor: 60
+  sentinel_value:
+    present: true
+    column: temp_c
+    value: -999
+    count: 48
+  duplicate_rows:
+    present: true
+    count: 35
+  stuck_sensor:
+    present: false
+    column: null
+    start_date: null
+    end_date: null
+  target_typos:
+    present: true
+    count: 11
+  spelling_variants:
+    present: false
+    column: null
+    true_levels: null
+tracking:
+  experiment_name: mp098-tiffin-delivery
+  best_run_id: 758053da1b3d40cea7d9beab9bb8bfc3
+  registered_model_name: mp098-delivery-model
+  champion_version: 2
+monitoring:
+  psi:
+    distance_km: 3.6467
+    tiffins: 0.0379
+    handovers: 0.0293
+    wait_at_station_min: 0.0165
+    rider_age: 0.0257
+    temp_c: 0.0436
+  most_drifted_feature: distance_km
+  mae_by_group:
+    Central: 25.2724
+    Suburb: 4.1055
+    Old City: 3.4567
+  worst_served_group: Central
+  mae_v1_on_check: 7.6111
+  mae_v2_on_check: 5.3443
+  decision: promote

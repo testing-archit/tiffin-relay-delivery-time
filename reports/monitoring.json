@@ -1,0 +1,26 @@
+{
+  "psi": {
+    "distance_km": 3.6467,
+    "tiffins": 0.0379,
+    "handovers": 0.0293,
+    "wait_at_station_min": 0.0165,
+    "rider_age": 0.0257,
+    "temp_c": 0.0436
+  },
+  "most_drifted_feature": "distance_km",
+  "mae_by_group": {
+    "Central": 25.2724,
+    "Old City": 3.4567,
+    "Suburb": 4.1055
+  },
+  "worst_served_group": "Central",
+  "check_rows": 90,
+  "check_start_date": "2026-08-14",
+  "mae_v1_on_check": 7.6111,
+  "mae_v2_on_check": 5.3443,
+  "improvement": 0.2978,
+  "decision": "promote",
+  "v2_run_id": "9d45b2bd152a4dac86576c5fcad22d6e",
+  "v2_version": "2",
+  "champion_version": "2"
+}
