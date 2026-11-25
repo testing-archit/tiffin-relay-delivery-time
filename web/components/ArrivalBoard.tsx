@@ -7,7 +7,9 @@ const MODE = { bicycle: "Bicycle", local_train: "Local train", scooter: "Scooter
 
 function arrival(pickup: string, minutes: number) {
   const [h, m] = (pickup || "11:30").split(":").map(Number);
-  return new Date(2026, 0, 1, h, m + Math.round(minutes)).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+  const t = new Date(2026, 0, 1, h, m + Math.round(minutes));
+  const hh = t.getHours() % 12 || 12, mm = String(t.getMinutes()).padStart(2, "0");
+  return <>{hh}:{mm}<small>{t.getHours() < 12 ? "am" : "pm"}</small></>;
 }
 
 export default function ArrivalBoard({ batch, minutes, pickup, problem, pending }:

@@ -8,3 +8,4 @@
 .route { margin-top: 18px; }
 .route svg { width: 100%; height: auto; display: block; }
 .legend { display: flex; justify-content: space-between; gap: 8px; color: var(--night); font-size: .8rem; margin-top: 4px; }
+.clock small { font-size: .38em; font-weight: 700; margin-left: .12em; letter-spacing: .04em; }

@@ -9,3 +9,4 @@
 .seg button { flex: 1; border: 0; background: none; padding: 8px 6px; cursor: pointer; font-size: .9rem; }
 .seg button + button { border-left: 1px solid var(--rim); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; font-weight: 700; }
+.num[type="time"] { width: 124px; }
