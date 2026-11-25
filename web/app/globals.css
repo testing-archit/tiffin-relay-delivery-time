@@ -43,3 +43,4 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .card h2 { font: 700 1.2rem/1.2 var(--display); letter-spacing: .03em; margin: 0 0 12px; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.stack { display: grid; gap: 20px; }

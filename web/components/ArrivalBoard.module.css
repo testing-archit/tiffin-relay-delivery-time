@@ -1,0 +1,10 @@
+.board { background: var(--ink); color: #fff; border-radius: 18px; padding: clamp(20px, 3vw, 36px); }
+.when { color: var(--night); margin: 0; font-size: 1rem; }
+.clock { font: 900 clamp(4.5rem, 13vw, 9.5rem)/.9 var(--display); letter-spacing: .01em; margin: 6px 0 8px; font-variant-numeric: tabular-nums; }
+.mins { margin: 0; font-size: 1.1rem; }
+.mins b { color: var(--lid); }
+.problem { color: #FFD7D1; }
+.stale { opacity: .45; transition: opacity .2s; }
+.route { margin-top: 18px; }
+.route svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; justify-content: space-between; gap: 8px; color: var(--night); font-size: .8rem; margin-top: 4px; }

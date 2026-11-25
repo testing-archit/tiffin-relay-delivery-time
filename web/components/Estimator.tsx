@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
+import ArrivalBoard from "./ArrivalBoard";
 import BatchForm from "./BatchForm";
 import { api, ApiError, DEFAULT_BATCH, type Batch, type Explanation, type Health } from "@/lib/api";
 import { fieldErrors } from "@/lib/errors";
@@ -10,15 +11,19 @@ export default function Estimator({ brand }: { brand: ReactNode }) {
   const [health, setHealth] = useState<Health | null | "down">(null);
   const [result, setResult] = useState<Explanation | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof Batch, string>>>({});
+  const [pending, setPending] = useState(true);
 
   useEffect(() => { api<Health>("health").then(setHealth, () => setHealth("down")); }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
     const t = setTimeout(() => {
+      setPending(true);
       api<Explanation>("explain", batch, ctrl.signal).then(
-        r => { setResult(r); setErrors({}); },
-        e => { if (e instanceof ApiError && e.status === 422) { setErrors(fieldErrors(e.detail)); setResult(null); } },
+        r => { setResult(r); setErrors({}); setPending(false); },
+        e => {
+          if (e instanceof ApiError && e.status === 422) { setErrors(fieldErrors(e.detail)); setResult(null); setPending(false); }
+        },
       );
     }, 180);
     return () => { clearTimeout(t); ctrl.abort(); };
@@ -41,8 +46,9 @@ export default function Estimator({ brand }: { brand: ReactNode }) {
           <h2 id="batch-title">The batch</h2>
           <BatchForm batch={batch} errors={errors} onChange={update} pickup={pickup} onPickup={setPickup} />
         </section>
-        <section aria-label="Estimate">
-          <p>{result ? `${result.delivery_min} min` : ""}</p>
+        <section className="stack" aria-label="Estimate">
+          <ArrivalBoard batch={batch} minutes={result?.delivery_min ?? null} pickup={pickup} pending={pending}
+            problem={Object.values(errors)[0]} />
         </section>
       </main>
     </>
