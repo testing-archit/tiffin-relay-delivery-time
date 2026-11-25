@@ -1,0 +1,12 @@
+# Raw data is tracked with DVC (see data/*.dvc), not git
+data/processed/
+mlruns/
+mlartifacts/
+mlflow.db
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+.pytest_cache/
+.env

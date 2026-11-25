@@ -1,0 +1,32 @@
+# MP098 pipeline settings. Every script reads this file.
+seed: 42
+target: delivery_min
+date_column: date
+id_column: record_id
+group_column: route_zone
+numeric_features: [distance_km, tiffins, handovers, wait_at_station_min, rider_age, temp_c]
+categorical_features: [transport, route_zone]
+
+paths:
+  train: data/train.csv
+  later: data/later.csv
+  holdout: data/holdout_features.csv
+  clean_train: data/processed/train_clean.csv
+  clean_later: data/processed/later_clean.csv
+  issues_report: reports/data_issues.json
+  metrics_report: reports/metrics.json
+  monitoring_report: reports/monitoring.json
+  model_export: models/model.joblib
+  predictions: predictions/holdout_predictions.csv
+  findings: findings.yaml
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment_name: mp098-tiffin-delivery
+  registered_model_name: mp098-delivery-model
+  champion_alias: champion
+
+monitoring:
+  psi_bins: 10
+  check_fraction: 0.30       # last 30% of later.csv (by date) is the check set
+  promotion_improvement: 0.15  # v2 must cut MAE by at least 15%
