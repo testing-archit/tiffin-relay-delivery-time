@@ -11,3 +11,6 @@ venv/
 .pytest_cache/
 .env
 deploy/.env
+
+# CLAUDE.md holds personal account and server details; the repo is public
+CLAUDE.md
