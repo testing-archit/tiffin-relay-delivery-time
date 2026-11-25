@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mp098-api
+  labels:
+    app: mp098-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mp098-api
+  template:
+    metadata:
+      labels:
+        app: mp098-api
+    spec:
+      containers:
+      - name: api
+        image: mp098-api:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30   # waits longer than readiness
+          periodSeconds: 20
+          failureThreshold: 3
