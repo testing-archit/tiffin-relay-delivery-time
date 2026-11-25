@@ -39,3 +39,16 @@ def test_explain_parts_add_up():
     assert {p["feature"] for p in r["parts"]} == set(GOOD)
     total = r["typical_min"] + sum(p["minutes"] for p in r["parts"])
     assert abs(total - r["delivery_min"]) < 0.5
+
+
+def test_ai_endpoints_503_without_key(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert client.get("/health").json()["ai_enabled"] is False
+    assert client.post("/ai/parse", json={"text": "40 dabbas by train"}).status_code == 503
+    assert client.post("/ai/chat", json={"messages": [{"role": "user", "text": "hi"}]}).status_code == 503
+
+
+def test_chat_tool_enforces_rules():
+    from app.main import _tool_predict
+    assert "error" in _tool_predict({**GOOD, "distance_km": 50})
+    assert _tool_predict(GOOD)["delivery_min"] > 0

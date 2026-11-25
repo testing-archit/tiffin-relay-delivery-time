@@ -10,3 +10,5 @@ PyYAML==6.0.3
 pytest
 httpx
 dvc
+google-genai==3.6.1
+python-dotenv

@@ -5,9 +5,10 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from fastapi import FastAPI
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from app import ai
 from app.explain import contributions
 
 MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).resolve().parent.parent / "models" / "model.joblib"))
@@ -63,7 +64,7 @@ class Explanation(Prediction):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_version": bundle["version"]}
+    return {"status": "ok", "model_version": bundle["version"], "ai_enabled": ai.enabled()}
 
 
 @app.post("/predict", response_model=Prediction)
@@ -86,3 +87,65 @@ def explain(batch: Batch):
     parts = contributions(model, _row(batch)) or []
     return Explanation(delivery_min=round(minutes, 1), model_version=bundle["version"],
                        typical_min=round(minutes - sum(p["minutes"] for p in parts), 1), parts=parts)
+
+
+# --- Gemini features --------------------------------------------------------
+
+class ParseRequest(BaseModel):
+    text: str = Field(..., min_length=2, max_length=2000)
+
+
+class AIExplainRequest(BaseModel):
+    batch: Batch
+    language: str = Field("English", max_length=40)
+
+
+class ChatTurn(BaseModel):
+    role: str = Field(..., pattern="^(user|model)$")
+    text: str = Field(..., max_length=4000)
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatTurn] = Field(..., min_length=1, max_length=40)
+    form: dict | None = None
+
+
+def _ai_call(fn, *args):
+    if not ai.enabled():
+        raise HTTPException(503, "AI is off: set GEMINI_API_KEY to turn it on.")
+    try:
+        return fn(*args)
+    except HTTPException:
+        raise
+    except Exception as exc:  # network, quota or model errors
+        raise HTTPException(502, f"Gemini did not answer: {type(exc).__name__}") from exc
+
+
+def _tool_predict(fields: dict) -> dict:
+    "Used by the chatbot: same rules as POST /predict."
+    try:
+        batch = Batch(**fields)
+    except ValidationError as exc:
+        return {"error": "; ".join(f"{e['loc'][0]}: {e['msg']}" for e in exc.errors())}
+    return {"delivery_min": round(_predict_row(batch), 1)}
+
+
+@app.post("/ai/parse")
+def ai_parse(req: ParseRequest):
+    "Turn a note in English, Hindi or Hinglish into form fields."
+    return {"fields": _ai_call(ai.parse_batch, req.text)}
+
+
+@app.post("/ai/explain")
+def ai_explain(req: AIExplainRequest):
+    "A short explanation of one estimate in the chosen language."
+    e = explain(req.batch)
+    text = _ai_call(ai.explain, req.batch.model_dump(mode="json"), e.delivery_min,
+                    [p.model_dump() for p in e.parts], req.language)
+    return {"text": text, "delivery_min": e.delivery_min}
+
+
+@app.post("/ai/chat")
+def ai_chat(req: ChatRequest):
+    "Chat with the dispatch assistant; it calls the delivery model for estimates."
+    return _ai_call(ai.chat, [m.model_dump() for m in req.messages], _tool_predict, req.form)
