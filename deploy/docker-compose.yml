@@ -92,6 +92,8 @@ services:
   watchtower:
     image: containrrr/watchtower:latest
     command: ["--label-enable", "--interval", "60", "--cleanup"]
+    environment:
+      DOCKER_API_VERSION: "1.44"   # Docker 29+ rejects watchtower's default API 1.25
     volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
     restart: unless-stopped
     logging: *logging
