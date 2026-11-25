@@ -17,7 +17,8 @@
 	reverse_proxy grafana:3000
 }
 
-# Plain http on the bare IP (before DNS is set up, and for health checks)
-:80 {
+# Plain http on the bare IP only (before DNS is set up, and for health checks).
+# Other names on this machine, such as the root domain, are left alone.
+http://{$PUBLIC_IP:127.0.0.1} {
 	reverse_proxy web:3000
 }

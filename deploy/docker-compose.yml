@@ -41,6 +41,7 @@ services:
     environment:
       APP_DOMAIN: ${APP_DOMAIN:-tiffin.architgupta.tech}
       GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-grafana.tiffin.architgupta.tech}
+      PUBLIC_IP: ${PUBLIC_IP:-127.0.0.1}
     ports: ["80:80", "443:443"]
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
