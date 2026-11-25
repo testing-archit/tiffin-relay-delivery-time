@@ -32,3 +32,10 @@ def test_boundaries_allowed():
 def test_missing_field_422():
     body = dict(GOOD); body.pop("rider_age")
     assert client.post("/predict", json=body).status_code == 422
+
+
+def test_explain_parts_add_up():
+    r = client.post("/explain", json=GOOD).json()
+    assert {p["feature"] for p in r["parts"]} == set(GOOD)
+    total = r["typical_min"] + sum(p["minutes"] for p in r["parts"])
+    assert abs(total - r["delivery_min"]) < 0.5

@@ -8,6 +8,8 @@ import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.explain import contributions
+
 MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).resolve().parent.parent / "models" / "model.joblib"))
 bundle = joblib.load(MODEL_PATH)
 model, FEATURES = bundle["model"], bundle["features"]
@@ -48,6 +50,17 @@ class Prediction(BaseModel):
     model_version: str
 
 
+class Part(BaseModel):
+    feature: str
+    label: str
+    minutes: float
+
+
+class Explanation(Prediction):
+    typical_min: float
+    parts: list[Part]
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "model_version": bundle["version"]}
@@ -55,5 +68,21 @@ def health():
 
 @app.post("/predict", response_model=Prediction)
 def predict(batch: Batch):
-    row = pd.DataFrame([batch.model_dump(mode="json")])[FEATURES]
-    return Prediction(delivery_min=round(float(model.predict(row)[0]), 1), model_version=bundle["version"])
+    return Prediction(delivery_min=round(_predict_row(batch), 1), model_version=bundle["version"])
+
+
+def _row(batch: Batch) -> pd.DataFrame:
+    return pd.DataFrame([batch.model_dump(mode="json")])[FEATURES]
+
+
+def _predict_row(batch: Batch) -> float:
+    return float(model.predict(_row(batch))[0])
+
+
+@app.post("/explain", response_model=Explanation)
+def explain(batch: Batch):
+    "The estimate plus how many minutes each input adds or saves versus a typical batch."
+    minutes = _predict_row(batch)
+    parts = contributions(model, _row(batch)) or []
+    return Explanation(delivery_min=round(minutes, 1), model_version=bundle["version"],
+                       typical_min=round(minutes - sum(p["minutes"] for p in parts), 1), parts=parts)
