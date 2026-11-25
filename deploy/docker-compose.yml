@@ -16,6 +16,7 @@ x-logging: &logging
 services:
   api:
     image: ${REGISTRY:-ghcr.io/testing-archit}/mp098-api:${TAG:-latest}
+    mem_limit: 512m
     env_file: [{path: .env, required: false}]   # GEMINI_API_KEY
     ports: ["127.0.0.1:8000:8000"]
     restart: unless-stopped
@@ -29,6 +30,7 @@ services:
 
   web:
     image: ${REGISTRY:-ghcr.io/testing-archit}/mp098-web:${TAG:-latest}
+    mem_limit: 256m
     environment: {API_URL: "http://api:8000"}
     ports: ["127.0.0.1:3000:3000"]
     depends_on: {api: {condition: service_healthy}}
@@ -38,11 +40,12 @@ services:
 
   caddy:
     image: caddy:2.10-alpine
+    mem_limit: 128m
     environment:
       APP_DOMAIN: ${APP_DOMAIN:-tiffin.architgupta.tech}
       GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-grafana.tiffin.architgupta.tech}
       PUBLIC_IP: ${PUBLIC_IP:-127.0.0.1}
-    ports: ["80:80", "443:443"]
+    ports: ["80:80", "443:443", "443:443/udp"]   # udp: HTTP/3, copes better with packet loss
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy:/data
@@ -52,6 +55,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.5.0
+    mem_limit: 256m
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=15d"]
     volumes:
       - ./prometheus:/etc/prometheus:ro
@@ -62,6 +66,7 @@ services:
 
   grafana:
     image: grafana/grafana:12.2.0
+    mem_limit: 384m
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?set GRAFANA_PASSWORD in deploy/.env}
@@ -79,8 +84,13 @@ services:
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.15.0
+    mem_limit: 384m
+    environment:
+      # no background job runner: this project only browses runs (it spawns ~7 extra processes)
+      MLFLOW_SERVER_ENABLE_JOB_EXECUTION: "false"
     # Runs were logged with absolute artifact paths, so the folder is mounted at the same path.
-    command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000",
+    # one worker: it only serves people browsing runs (4 workers took ~2 GB)
+    command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--workers", "1",
               "--backend-store-uri", "sqlite:///${MLFLOW_HOME:-/srv/mp098/mlflow}/mlflow.db"]
     volumes: ["${MLFLOW_HOME:-/srv/mp098/mlflow}:${MLFLOW_HOME:-/srv/mp098/mlflow}",
               "${MLRUNS_DIR:-/srv/mp098/mlflow/mlruns}:${MLRUNS_MOUNT:-/Users/archit/Desktop/G220_MP098/mlruns}"]
@@ -91,6 +101,7 @@ services:
 
   watchtower:
     image: containrrr/watchtower:latest
+    mem_limit: 64m
     command: ["--label-enable", "--interval", "60", "--cleanup"]
     environment:
       DOCKER_API_VERSION: "1.44"   # Docker 29+ rejects watchtower's default API 1.25
