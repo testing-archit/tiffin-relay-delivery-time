@@ -1,6 +1,7 @@
 # Whole MP098 stack on one machine:  docker compose -f deploy/docker-compose.yml up -d
-#   web        :80    Next.js UI (public)
-#   grafana    :3001  dashboards (public, password protected)
+#   caddy      :80/443  HTTPS front door: APP_DOMAIN -> web, GRAFANA_DOMAIN -> grafana
+#   web        :3000  Next.js UI
+#   grafana    :3001  dashboards (password protected)
 #   api        :8000  FastAPI model service (internal; the UI proxies to it)
 #   prometheus :9090  metrics + alert rules (internal)
 #   mlflow     :5000  experiment tracking + model registry UI (internal)
@@ -29,11 +30,24 @@ services:
   web:
     image: ${REGISTRY:-ghcr.io/testing-archit}/mp098-web:${TAG:-latest}
     environment: {API_URL: "http://api:8000"}
-    ports: ["${WEB_PORT:-80}:3000"]
+    ports: ["127.0.0.1:3000:3000"]
     depends_on: {api: {condition: service_healthy}}
     restart: unless-stopped
     logging: *logging
     labels: ["com.centurylinklabs.watchtower.enable=true"]
+
+  caddy:
+    image: caddy:2.10-alpine
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-tiffin.architgupta.tech}
+      GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-grafana.tiffin.architgupta.tech}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy:/data
+    depends_on: [web, grafana]
+    restart: unless-stopped
+    logging: *logging
 
   prometheus:
     image: prom/prometheus:v3.5.0
@@ -52,11 +66,12 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?set GRAFANA_PASSWORD in deploy/.env}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/mp098.json
+      GF_SERVER_ROOT_URL: https://${GRAFANA_DOMAIN:-grafana.tiffin.architgupta.tech}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana:/var/lib/grafana
-    ports: ["${GRAFANA_PORT:-3001}:3000"]
+    ports: ["127.0.0.1:3001:3000"]
     depends_on: [prometheus]
     restart: unless-stopped
     logging: *logging
@@ -84,3 +99,4 @@ services:
 volumes:
   prometheus:
   grafana:
+  caddy:

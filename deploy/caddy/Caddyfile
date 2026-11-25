@@ -1,0 +1,23 @@
+# Public entry point. Caddy gets and renews Let's Encrypt certificates itself.
+{
+	email {$ACME_EMAIL:admin@architgupta.tech}
+}
+
+{$APP_DOMAIN:tiffin.architgupta.tech} {
+	encode zstd gzip
+	reverse_proxy web:3000
+	log {
+		output stdout
+		format json
+	}
+}
+
+{$GRAFANA_DOMAIN:grafana.tiffin.architgupta.tech} {
+	encode zstd gzip
+	reverse_proxy grafana:3000
+}
+
+# Plain http on the bare IP (before DNS is set up, and for health checks)
+:80 {
+	reverse_proxy web:3000
+}
