@@ -1,21 +1,92 @@
+# CI: every push and pull request. Lints, tests and builds everything that ships.
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  python:
+    name: API and pipeline (lint + tests)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    - run: pip install -r requirements.txt
-    - name: API and cleaning tests (need data, so data tests skip if absent)
-      run: pytest -q
-    - name: findings.yaml is valid YAML
-      run: python -c "import yaml; yaml.safe_load(open('findings.yaml'))"
-    - name: Docker image builds
-      run: docker build -t mp098-api:1.0 .
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt ruff
+      - name: Lint
+        run: ruff check src app tests deploy
+      - name: "Tests (data-dependent tests skip: raw CSVs live in DVC)"
+        run: pytest -q
+      - name: findings.yaml is valid and complete
+        run: |
+          python - <<'PY'
+          import yaml
+          f = yaml.safe_load(open("findings.yaml"))
+          assert f["group_id"] == "G220" and f["problem_id"] == "MP098"
+          assert f["monitoring"]["decision"] in ("promote", "keep")
+          print("findings.yaml ok")
+          PY
+
+  web:
+    name: Web UI (lint + typecheck + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run build
+
+  config:
+    name: Deploy config (compose, Prometheus, Kubernetes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker compose file is valid
+        run: GRAFANA_PASSWORD=ci docker compose -f deploy/docker-compose.yml config -q
+      - name: Prometheus config and alert rules are valid
+        run: docker run --rm -v "$PWD/deploy/prometheus:/p" --entrypoint promtool prom/prometheus:v3.5.0 check config /p/prometheus.yml
+      - name: Kubernetes manifests are valid
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz | tar xz
+          ./kubeconform -strict -summary k8s/
+
+  images:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    needs: [python, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: API image (mp098-api:1.0)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: mp098-api:1.0
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: web
+          tags: mp098-web:1.0
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
