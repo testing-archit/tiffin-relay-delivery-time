@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import ArrivalBoard from "./ArrivalBoard";
 import BatchForm from "./BatchForm";
 import Breakdown from "./Breakdown";
+import NoteFill from "./NoteFill";
 import { api, ApiError, DEFAULT_BATCH, type Batch, type Explanation, type Health } from "@/lib/api";
 import { fieldErrors } from "@/lib/errors";
 
@@ -46,6 +47,7 @@ export default function Estimator({ brand }: { brand: ReactNode }) {
       <main className="layout">
         <section className="card" aria-labelledby="batch-title">
           <h2 id="batch-title">The batch</h2>
+          <NoteFill aiOn={aiOn} onFill={update} />
           <BatchForm batch={batch} errors={errors} onChange={update} pickup={pickup} onPickup={setPickup} />
         </section>
         <section className="stack" aria-label="Estimate">
