@@ -52,3 +52,14 @@ def test_chat_tool_enforces_rules():
     from app.main import _tool_predict
     assert "error" in _tool_predict({**GOOD, "distance_km": 50})
     assert _tool_predict(GOOD)["delivery_min"] > 0
+
+
+def test_metrics_and_request_id():
+    client.post("/predict", json=GOOD)
+    client.post("/predict", json={**GOOD, "temp_c": 1})
+    r = client.get("/health", headers={"x-request-id": "abc123"})
+    assert r.headers["x-request-id"] == "abc123"
+    m = client.get("/metrics").text
+    assert 'predictions_total{route_zone="Old City",transport="scooter"}' in m
+    assert 'validation_errors_total{field="temp_c"}' in m
+    assert "model_info" in m

@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app import ai
 from app.explain import contributions
+from app.observability import ai_timer, event, instrument, record_prediction
 
 MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).resolve().parent.parent / "models" / "model.joblib"))
 bundle = joblib.load(MODEL_PATH)
@@ -18,6 +19,10 @@ model, FEATURES = bundle["model"], bundle["features"]
 app = FastAPI(title="MP098 Tiffin Relay Delivery Time",
               description="Predicts minutes from pick-up to the office desk for the Bhopal Dabba Relay Union.",
               version="1.0.0")
+
+
+instrument(app, bundle["version"])
+event("model_loaded", version=bundle["version"], path=str(MODEL_PATH), ai_enabled=ai.enabled())
 
 
 class Transport(str, Enum):
@@ -77,7 +82,9 @@ def _row(batch: Batch) -> pd.DataFrame:
 
 
 def _predict_row(batch: Batch) -> float:
-    return float(model.predict(_row(batch))[0])
+    minutes = float(model.predict(_row(batch))[0])
+    record_prediction(batch.model_dump(mode="json"), minutes)
+    return minutes
 
 
 @app.post("/explain", response_model=Explanation)
@@ -114,7 +121,8 @@ def _ai_call(fn, *args):
     if not ai.enabled():
         raise HTTPException(503, "AI is off: set GEMINI_API_KEY to turn it on.")
     try:
-        return fn(*args)
+        with ai_timer(fn.__name__):
+            return fn(*args)
     except HTTPException:
         raise
     except Exception as exc:  # network, quota or model errors

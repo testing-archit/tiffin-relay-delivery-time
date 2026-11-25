@@ -12,3 +12,4 @@ httpx
 dvc
 google-genai==3.6.1
 python-dotenv
+prometheus_client==0.26.0
