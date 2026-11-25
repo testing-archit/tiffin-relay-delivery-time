@@ -1,0 +1,49 @@
+# Next.js UI in front of the API. It reaches the API through mp098-svc.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mp098-web
+  labels:
+    app: mp098-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mp098-web
+  template:
+    metadata:
+      labels:
+        app: mp098-web
+    spec:
+      containers:
+      - name: web
+        image: mp098-web:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        env:
+        - name: API_URL
+          value: http://mp098-svc
+        resources:
+          requests: {memory: 128Mi, cpu: 50m}
+          limits: {memory: 384Mi, cpu: 500m}
+        readinessProbe:
+          httpGet: {path: /, port: 3000}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /, port: 3000}
+          initialDelaySeconds: 30
+          periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mp098-web-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: mp098-web
+  ports:
+  - port: 80
+    targetPort: 3000
