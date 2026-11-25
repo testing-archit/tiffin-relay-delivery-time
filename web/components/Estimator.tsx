@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import ArrivalBoard from "./ArrivalBoard";
 import BatchForm from "./BatchForm";
 import Breakdown from "./Breakdown";
+import ChatPanel from "./ChatPanel";
 import NoteFill from "./NoteFill";
 import { api, ApiError, DEFAULT_BATCH, type Batch, type Explanation, type Health } from "@/lib/api";
 import { fieldErrors } from "@/lib/errors";
@@ -56,6 +57,7 @@ export default function Estimator({ brand }: { brand: ReactNode }) {
           <Breakdown result={result} batch={batch} aiOn={aiOn} />
         </section>
       </main>
+      {aiOn && <ChatPanel batch={batch} onEstimate={b => setBatch(b)} />}
     </>
   );
 }
